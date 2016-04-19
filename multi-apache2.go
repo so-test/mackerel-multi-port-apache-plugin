@@ -66,6 +66,7 @@ var graphdef = map[string](mp.Graphs){
 
 // MultiApache2Plugin for fetching metrics
 type MultiApache2Plugin struct {
+	Protocol string
 	Host     string
 	PortList []int
 	Path     string
@@ -94,6 +95,7 @@ func doMain(c *cli.Context) {
 
 	var apache2 MultiApache2Plugin
 
+	apache2.Protocol = c.String("protocol")
 	apache2.Host = c.String("http_host")
 	apache2.PortList = c.IntSlice("http_port")
 	apache2.Path = c.String("status_page")
@@ -113,7 +115,7 @@ func doMain(c *cli.Context) {
 func (c MultiApache2Plugin) FetchMetrics() (map[string]interface{}, error) {
 	channel := make(chan *Metrics4Channel, len(c.PortList))
 	for _, port := range c.PortList {
-		go fetchMetrics4Port(c.Host, port, c.Path, c.Header, channel)
+		go fetchMetrics4Port(c.Protocol, c.Host, port, c.Path, c.Header, channel)
 	}
 
 	stats := make(map[string]interface{})
@@ -130,11 +132,11 @@ func (c MultiApache2Plugin) FetchMetrics() (map[string]interface{}, error) {
 	return stats, nil
 }
 
-func fetchMetrics4Port(host string, port int, path string, header []string, channel chan *Metrics4Channel) {
+func fetchMetrics4Port(protocol string, host string, port int, path string, header []string, channel chan *Metrics4Channel) {
 	ret := &Metrics4Channel{Port: port}
 	defer ret.send2Channel(channel)
 
-	data, err := getApache2Metrics(host, port, path, header)
+	data, err := getApache2Metrics(protocol, host, port, path, header)
 	if err != nil {
 		ret.Err = fmt.Errorf("Failed at port=%d: %s", port, err)
 		return
@@ -209,8 +211,8 @@ func parseApache2Status(str string, p map[string]interface{}) error {
 }
 
 // Getting apache2 status from server-status module data.
-func getApache2Metrics(host string, port int, path string, header []string) (string, error) {
-	uri := "http://" + host + ":" + strconv.FormatUint(uint64(port), 10) + path
+func getApache2Metrics(protocol string, host string, port int, path string, header []string) (string, error) {
+	uri := protocol + "://" + host + ":" + strconv.FormatUint(uint64(port), 10) + path
 	req, err := http.NewRequest("GET", uri, nil)
 	if err != nil {
 		return "", err

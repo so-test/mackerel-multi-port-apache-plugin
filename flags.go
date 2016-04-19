@@ -5,11 +5,19 @@ import (
 )
 
 var flags = []cli.Flag{
+	cliProtocol,
 	cliHTTPHost,
 	cliHTTPPort,
 	cliHeader,
 	cliStatusPage,
 	cliTempFile,
+}
+
+var cliProtocol = cli.StringFlag{
+	Name:   "protocol, c",
+	Value:  "http",
+	Usage:  "protocol for /server-status access",
+	EnvVar: "ENVVAR_PROTOCOL",
 }
 
 var cliHTTPHost = cli.StringFlag{
