@@ -16,7 +16,7 @@ import (
 
 // metric value structure
 var graphdef = map[string](mp.Graphs){
-	"apache2.*.Workers": mp.Graphs{
+	"apache2.workers.#": mp.Graphs{
 		Label: "Apache Workers",
 		Unit:  "integer",
 		Metrics: [](mp.Metrics){
@@ -24,28 +24,28 @@ var graphdef = map[string](mp.Graphs){
 			mp.Metrics{Name: "idle_workers", Label: "Idle Workers", Diff: false, Stacked: true},
 		},
 	},
-	"apache2.*.Bytes": mp.Graphs{
+	"apache2.bytes.#": mp.Graphs{
 		Label: "Apache Bytes",
 		Unit:  "bytes",
 		Metrics: [](mp.Metrics){
-			mp.Metrics{Name: "bytes_sent", Label: "Bytes Sent", Diff: true, Type: "uint64"},
+			mp.Metrics{Name: "bytes_sent", Label: "Bytes Sent", Diff: true},
 		},
 	},
-	"apache2.*.Cpu": mp.Graphs{
+	"apache2.cpu.#": mp.Graphs{
 		Label: "Apache CPU Load",
 		Unit:  "float",
 		Metrics: [](mp.Metrics){
 			mp.Metrics{Name: "cpu_load", Label: "CPU Load", Diff: false},
 		},
 	},
-	"apache2.*.Req": mp.Graphs{
+	"apache2.req.#": mp.Graphs{
 		Label: "Apache Requests",
 		Unit:  "integer",
 		Metrics: [](mp.Metrics){
-			mp.Metrics{Name: "requests", Label: "Requests", Diff: true, Type: "uint64"},
+			mp.Metrics{Name: "requests", Label: "Requests", Diff: true},
 		},
 	},
-	"apache2.*.Scoreboard": mp.Graphs{
+	"apache2.scoreboard.#": mp.Graphs{
 		Label: "Apache Scoreboard",
 		Unit:  "integer",
 		Metrics: [](mp.Metrics){
@@ -59,7 +59,7 @@ var graphdef = map[string](mp.Graphs){
 			mp.Metrics{Name: "score-L", Label: "Logging", Diff: false, Stacked: true},
 			mp.Metrics{Name: "score-G", Label: "Gracefully finishing", Diff: false, Stacked: true},
 			mp.Metrics{Name: "score-I", Label: "Idle cleanup", Diff: false, Stacked: true},
-			mp.Metrics{Name: "score-.", Label: "Open slot", Diff: false, Stacked: true},
+			mp.Metrics{Name: "score-dot", Label: "Open slot", Diff: false, Stacked: true},
 		},
 	},
 }
@@ -126,7 +126,7 @@ func (c MultiApache2Plugin) FetchMetrics() (map[string]interface{}, error) {
 			return nil, stat.Err
 		}
 		for key, val := range stat.Stat {
-			stats[fmt.Sprintf("apache2.%d.%s", stat.Port, key)] = val
+			stats[fmt.Sprintf("apache2.%s", strings.Replace(key, "*", strconv.Itoa(stat.Port), 1))] = val
 		}
 	}
 	return stats, nil
@@ -168,7 +168,7 @@ func parseApache2Scoreboard(str string, p map[string]interface{}) error {
 		}
 		record := strings.Split(line, ":")
 		for _, sb := range strings.Split(strings.Trim(record[1], " "), "") {
-			name := fmt.Sprintf("Scoreboard.score-%s", sb)
+			name := fmt.Sprintf("scoreboard.*.score-%s", strings.Replace(sb, ".", "dot", 1))
 			c, assert := p[name].(float64)
 			if !assert {
 				c = 0.0
@@ -184,11 +184,11 @@ func parseApache2Scoreboard(str string, p map[string]interface{}) error {
 // parsing metrics from server-status?auto
 func parseApache2Status(str string, p map[string]interface{}) error {
 	Params := map[string]string{
-		"Total Accesses": "Req.requests",
-		"Total kBytes":   "Bytes.bytes_sent",
-		"CPULoad":        "Cpu.cpu_load",
-		"BusyWorkers":    "Workers.busy_workers",
-		"IdleWorkers":    "Workers.idle_workers"}
+		"Total Accesses": "req.*.requests",
+		"Total kBytes":   "bytes.*.bytes_sent",
+		"CPULoad":        "cpu.*.cpu_load",
+		"BusyWorkers":    "workers.*.busy_workers",
+		"IdleWorkers":    "workers.*.idle_workers"}
 
 	for _, line := range strings.Split(str, "\n") {
 		record := strings.Split(line, ":")
