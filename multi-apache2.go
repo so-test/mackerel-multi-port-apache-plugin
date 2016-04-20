@@ -16,6 +16,13 @@ import (
 
 // metric value structure
 var graphdef = map[string](mp.Graphs){
+	"apache2.access.#": mp.Graphs{
+		Label: "Access to server-status ",
+		Unit:  "integer",
+		Metrics: [](mp.Metrics){
+			mp.Metrics{Name: "disconnect", Label: "disconnect", Diff: false},
+		},
+	},
 	"apache2.workers.#": mp.Graphs{
 		Label: "Apache Workers",
 		Unit:  "integer",
@@ -121,9 +128,11 @@ func (c MultiApache2Plugin) FetchMetrics() (map[string]interface{}, error) {
 	stats := make(map[string]interface{})
 	for i := 0; i < cap(channel); i++ {
 		stat := <-channel
-		// 一つでもエラーだったら終了させる
+		accStatKey := fmt.Sprintf("apache2.access.%d.disconnect", stat.Port)
+		stats[accStatKey] = 0
 		if stat.Err != nil {
-			return nil, stat.Err
+			stats[accStatKey] = 1
+			continue
 		}
 		for key, val := range stat.Stat {
 			stats[fmt.Sprintf("apache2.%s", strings.Replace(key, "*", strconv.Itoa(stat.Port), 1))] = val
