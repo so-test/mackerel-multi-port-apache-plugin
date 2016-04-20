@@ -59,7 +59,7 @@ var graphdef = map[string](mp.Graphs){
 			mp.Metrics{Name: "score-_", Label: "Waiting for connection", Diff: false, Stacked: true},
 			mp.Metrics{Name: "score-S", Label: "Starting up", Diff: false, Stacked: true},
 			mp.Metrics{Name: "score-R", Label: "Reading request", Diff: false, Stacked: true},
-			mp.Metrics{Name: "scpre-W", Label: "Sending reply", Diff: false, Stacked: true},
+			mp.Metrics{Name: "score-W", Label: "Sending reply", Diff: false, Stacked: true},
 			mp.Metrics{Name: "score-K", Label: "Keepalive", Diff: false, Stacked: true},
 			mp.Metrics{Name: "score-D", Label: "DNS lookup", Diff: false, Stacked: true},
 			mp.Metrics{Name: "score-C", Label: "Closing connection", Diff: false, Stacked: true},
@@ -129,9 +129,9 @@ func (c MultiApache2Plugin) FetchMetrics() (map[string]interface{}, error) {
 	for i := 0; i < cap(channel); i++ {
 		stat := <-channel
 		accStatKey := fmt.Sprintf("apache2.access.%d.disconnect", stat.Port)
-		stats[accStatKey] = 0
+		stats[accStatKey] = float64(0)
 		if stat.Err != nil {
-			stats[accStatKey] = 1
+			stats[accStatKey] = float64(1)
 			continue
 		}
 		for key, val := range stat.Stat {
