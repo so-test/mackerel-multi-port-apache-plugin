@@ -17,7 +17,7 @@ import (
 // metric value structure
 var graphdef = map[string](mp.Graphs){
 	"apache2.access.#": mp.Graphs{
-		Label: "Access To Server-status ",
+		Label: "Apache Disconnection",
 		Unit:  "integer",
 		Metrics: [](mp.Metrics){
 			mp.Metrics{Name: "disconnect", Label: "Die", Diff: false},
